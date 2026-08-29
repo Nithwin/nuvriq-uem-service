@@ -67,3 +67,16 @@ type APIResponse struct {
 	Meta    *PaginationMeta `json:"meta,omitempty"`
 	Error   string          `json:"error,omitempty"`
 }
+
+type InactiveSummary struct {
+	TotalInactiveOrUnSynced int `json:"total_inactive_or_unSynced"`
+	InactiveCount           int `json:"inactive_count"`
+	NeverSyncedCount        int `json:"never_synced_count"`
+}
+
+type InactiveDevicesResponse struct {
+	Status        string          `json:"status"`
+	ThresholdDays int             `json:"threshold_days"`
+	Summary       InactiveSummary `json:"summary"`
+	Data          []Device        `json:"data"`
+}

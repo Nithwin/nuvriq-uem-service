@@ -82,3 +82,40 @@ func (r *Repo) ListDevices(ctx context.Context, filter ListDevicesFilter) ([]Dev
 
 	return devices, total, nil
 }
+
+func (r *Repo) GetInactiveDevices(ctx context.Context, thresholdSeconds int) ([]Device, InactiveSummary, error) {
+	cutoff := time.Now().UTC().Add(-time.Duration(thresholdSeconds) * time.Second)
+
+	var devices []Device
+	err := r.db.WithContext(ctx).
+		Where("last_synced_at IS NULL OR last_synced_at < ?", cutoff).
+		Order("last_synced_at ASC NULLS FIRST").
+		Find(&devices).Error
+	if err != nil {
+		return nil, InactiveSummary{}, err
+	}
+
+	var summary InactiveSummary
+	summary.TotalInactiveOrUnSynced = len(devices)
+
+	if len(devices) > 0 {
+		var ids []string
+		for i := range devices {
+			if devices[i].LastSyncedAt == nil {
+				summary.NeverSyncedCount++
+				devices[i].Status = "never_synced"
+			} else {
+				summary.InactiveCount++
+				if devices[i].Status != "inactive" {
+					ids = append(ids, devices[i].ID)
+					devices[i].Status = "inactive"
+				}
+			}
+		}
+		if len(ids) > 0 {
+			_ = r.db.WithContext(ctx).Model(&Device{}).Where("id IN ?", ids).Update("status", "inactive").Error
+		}
+	}
+
+	return devices, summary, nil
+}

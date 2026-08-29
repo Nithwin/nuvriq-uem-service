@@ -242,3 +242,42 @@ func (h *Handler) ListDevices(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
+
+func (h *Handler) GetInactiveDevices(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	days := 60
+	thresholdSeconds := days * 86400
+
+	query := r.URL.Query()
+	if daysStr := strings.TrimSpace(query.Get("days")); daysStr != "" {
+		if d, err := strconv.Atoi(daysStr); err == nil && d > 0 {
+			days = d
+			thresholdSeconds = days * 86400
+		}
+	}
+	if thresholdStr := strings.TrimSpace(query.Get("threshold_seconds")); thresholdStr != "" {
+		if t, err := strconv.Atoi(thresholdStr); err == nil && t > 0 {
+			thresholdSeconds = t
+			days = t / 86400
+		}
+	}
+
+	devices, summary, err := h.repo.GetInactiveDevices(r.Context(), thresholdSeconds)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(APIResponse{
+			Status: "error",
+			Error:  "failed to fetch inactive devices: " + err.Error(),
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(InactiveDevicesResponse{
+		Status:        "success",
+		ThresholdDays: days,
+		Summary:       summary,
+		Data:          devices,
+	})
+}
