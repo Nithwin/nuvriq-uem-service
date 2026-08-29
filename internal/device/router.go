@@ -10,4 +10,5 @@ func RegisterRoutes(mux *http.ServeMux, db *gorm.DB) {
 	handler := NewDeviceHandler(db)
 	mux.HandleFunc("POST /api/v1/devices", handler.RegisterDevice)
 	mux.HandleFunc("POST /api/v1/devices/{id}/sync", handler.SyncDevice)
+	mux.HandleFunc("GET /api/v1/devices/{id}", handler.GetDevice)
 }
