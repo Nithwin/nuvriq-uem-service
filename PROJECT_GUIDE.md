@@ -2,7 +2,7 @@
 
 > **Project Name**: Unified Endpoint Management (UEM) Device Service  
 > **Target Execution Time**: 2 Hours  
-> **Tech Stack**: Golang | PostgreSQL | REST API | Docker & Docker Compose  
+> **Tech Stack**: Golang | PostgreSQL | GORM | Docker & Docker Compose | Redis (Optional Cache)  
 
 ---
 
@@ -22,16 +22,15 @@ To manage and secure these devices, IT administrators need a **Unified Endpoint 
 
 ## 2. Tech Stack, Architecture & Database Selection
 
-### Recommended Architecture & Tech Ideas
+### Recommended Architecture & Tech Stack
 
-| Component | Technology | Rationale / Implementation Idea |
+| Component | Technology | Role & Strategic Choice for 2-Hour Execution |
 | :--- | :--- | :--- |
-| **Language** | **Golang (1.22+)** | Native concurrency (goroutines/channels), high performance, small memory footprint for backend microservices. |
-| **HTTP Router** | **Standard `net/http`** or **`github.com/go-chi/chi/v5`** | Idiomatic Go, lightweight, zero extra dependencies with standard library, or `chi` for clean URL parameter parsing (`/devices/{id}`). |
-| **Database** | **PostgreSQL 15+** | Relational integrity, ACID compliance, robust indexing capabilities, and high-concurrency connection pooling. |
-| **DB Driver** | **`github.com/lib/pq`** or **`pgx/v5`** | High-performance PostgreSQL driver for Go `database/sql`. |
-| **Concurrency** | **`database/sql` Connection Pool** | Configured `SetMaxOpenConns(25)` & `SetMaxIdleConns(10)` to handle thousands of concurrent heartbeats. |
-| **Simulator** | **Goroutines + Worker Pool** | Spawns $N$ concurrent routines sending HTTP POST sync requests to simulate real device agents. |
+| **Language** | **Golang (1.22+)** | Native concurrency (goroutines/channels), high performance for backend services. |
+| **ORM / Data Layer** | **GORM (`gorm.io/gorm` & `gorm.io/driver/postgres`)** | **YES!** Accelerates development significantly with `AutoMigrate()`, clean struct mapping, and built-in transaction safety under 2 hours. |
+| **Containerization** | **Docker & Docker Compose** | **YES!** Recommended by assessment. Easily spins up Golang app, PostgreSQL, and Redis in 1 command (`docker-compose up`). |
+| **Primary Database** | **PostgreSQL 15+** | **MANDATORY for persistence.** Stores device inventory, status, and synchronization timestamps. |
+| **Cache Layer** | **Redis (Optional)** | **YES for caching/rate-limiting.** Useful to cache `GET /api/v1/fleet/summary` or store heartbeat rates. *(Focus on PG first, add Redis if time permits)*. |
 
 ---
 
