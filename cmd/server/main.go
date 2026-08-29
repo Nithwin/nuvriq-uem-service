@@ -15,6 +15,7 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 
+	"nuvriq-uem-service/internal/device"
 	"nuvriq-uem-service/internal/router"
 	"nuvriq-uem-service/pkg/database"
 )
@@ -32,6 +33,12 @@ func main() {
 	db, err = database.ConnectDB()
 	if err != nil {
 		log.Printf("[WARNING] Error connecting to database: %v. Running in degraded mode.\n", err)
+	} else {
+		// Auto Migrate database schema
+		if err := db.AutoMigrate(&device.Device{}); err != nil {
+			log.Fatalf("Error auto-migrating device table: %v", err)
+		}
+		log.Println("Database migration completed: devices table ready.")
 	}
 
 	mux := http.NewServeMux()
