@@ -43,10 +43,27 @@ type SyncDeviceRequest struct {
 	Timestamp string `json:"timestamp,omitempty"`
 }
 
+// ListDevicesFilter DTO
+type ListDevicesFilter struct {
+	Platform string
+	Status   string
+	Page     int
+	Limit    int
+}
+
+// PaginationMeta DTO
+type PaginationMeta struct {
+	Total      int64 `json:"total"`
+	Page       int   `json:"page"`
+	Limit      int   `json:"limit"`
+	TotalPages int   `json:"total_pages"`
+}
+
 // Response Wrapper DTO
 type APIResponse struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   string      `json:"error,omitempty"`
+	Status  string          `json:"status"`
+	Message string          `json:"message,omitempty"`
+	Data    interface{}     `json:"data,omitempty"`
+	Meta    *PaginationMeta `json:"meta,omitempty"`
+	Error   string          `json:"error,omitempty"`
 }

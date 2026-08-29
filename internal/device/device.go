@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -179,5 +181,64 @@ func (h *Handler) GetDevice(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(APIResponse{
 		Status: "success",
 		Data:   dev,
+	})
+}
+
+func (h *Handler) ListDevices(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	query := r.URL.Query()
+	platform := strings.TrimSpace(query.Get("platform"))
+	status := strings.TrimSpace(query.Get("status"))
+
+	page := 1
+	if pageStr := strings.TrimSpace(query.Get("page")); pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	limit := 10
+	if limitStr := strings.TrimSpace(query.Get("limit")); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+			if limit > 100 {
+				limit = 100
+			}
+		}
+	}
+
+	filter := ListDevicesFilter{
+		Platform: platform,
+		Status:   status,
+		Page:     page,
+		Limit:    limit,
+	}
+
+	devices, total, err := h.repo.ListDevices(r.Context(), filter)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(APIResponse{
+			Status: "error",
+			Error:  "failed to list devices: " + err.Error(),
+		})
+		return
+	}
+
+	totalPages := 0
+	if total > 0 {
+		totalPages = int(math.Ceil(float64(total) / float64(limit)))
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(APIResponse{
+		Status: "success",
+		Data:   devices,
+		Meta: &PaginationMeta{
+			Total:      total,
+			Page:       page,
+			Limit:      limit,
+			TotalPages: totalPages,
+		},
 	})
 }

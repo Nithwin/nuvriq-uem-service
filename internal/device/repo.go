@@ -2,6 +2,7 @@ package device
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -54,4 +55,30 @@ func (r *Repo) UpdateDeviceSync(ctx context.Context, id string) (*Device, error)
 	}
 
 	return r.GetDeviceByID(ctx, id)
+}
+
+func (r *Repo) ListDevices(ctx context.Context, filter ListDevicesFilter) ([]Device, int64, error) {
+	var devices []Device
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&Device{})
+
+	if strings.TrimSpace(filter.Platform) != "" {
+		query = query.Where("platform = ?", strings.ToLower(strings.TrimSpace(filter.Platform)))
+	}
+	if strings.TrimSpace(filter.Status) != "" {
+		query = query.Where("status = ?", strings.ToLower(strings.TrimSpace(filter.Status)))
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (filter.Page - 1) * filter.Limit
+	err := query.Order("created_at DESC").Offset(offset).Limit(filter.Limit).Find(&devices).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return devices, total, nil
 }
