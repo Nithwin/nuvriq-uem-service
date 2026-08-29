@@ -80,3 +80,22 @@ type InactiveDevicesResponse struct {
 	Summary       InactiveSummary `json:"summary"`
 	Data          []Device        `json:"data"`
 }
+
+type StatusCounts struct {
+	Active      int64 `json:"active"`
+	Inactive    int64 `json:"inactive"`
+	NeverSynced int64 `json:"never_synced"`
+}
+
+type PlatformBreakdown struct {
+	Windows int64 `json:"windows"`
+	MacOS   int64 `json:"macos"`
+	Linux   int64 `json:"linux"`
+}
+
+type FleetSummaryData struct {
+	TotalDevices      int64             `json:"total_devices"`
+	StatusCounts      StatusCounts      `json:"status_counts"`
+	PlatformBreakdown PlatformBreakdown `json:"platform_breakdown"`
+	HealthPercentage  float64           `json:"health_percentage"`
+}

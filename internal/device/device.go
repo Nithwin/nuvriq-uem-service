@@ -281,3 +281,23 @@ func (h *Handler) GetInactiveDevices(w http.ResponseWriter, r *http.Request) {
 		Data:          devices,
 	})
 }
+
+func (h *Handler) GetFleetSummary(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	summary, err := h.repo.GetFleetSummary(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(APIResponse{
+			Status: "error",
+			Error:  "failed to fetch fleet summary: " + err.Error(),
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(APIResponse{
+		Status: "success",
+		Data:   summary,
+	})
+}

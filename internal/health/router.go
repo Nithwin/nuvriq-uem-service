@@ -7,5 +7,5 @@ import (
 )
 
 func RegisterRoutes(mux *http.ServeMux, db *gorm.DB) {
-	mux.HandleFunc("GET /healthz", HandleHealth(db))
+	mux.HandleFunc("GET /health", HandleHealth(db))
 }

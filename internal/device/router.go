@@ -13,4 +13,5 @@ func RegisterRoutes(mux *http.ServeMux, db *gorm.DB) {
 	mux.HandleFunc("GET /api/v1/devices/inactive", handler.GetInactiveDevices)
 	mux.HandleFunc("GET /api/v1/devices/{id}", handler.GetDevice)
 	mux.HandleFunc("GET /api/v1/devices", handler.ListDevices)
+	mux.HandleFunc("GET /api/v1/fleet/summary", handler.GetFleetSummary)
 }

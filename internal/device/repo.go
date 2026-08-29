@@ -2,6 +2,7 @@ package device
 
 import (
 	"context"
+	"math"
 	"strings"
 	"time"
 
@@ -118,4 +119,41 @@ func (r *Repo) GetInactiveDevices(ctx context.Context, thresholdSeconds int) ([]
 	}
 
 	return devices, summary, nil
+}
+
+func (r *Repo) GetFleetSummary(ctx context.Context) (*FleetSummaryData, error) {
+	var total int64
+	if err := r.db.WithContext(ctx).Model(&Device{}).Count(&total).Error; err != nil {
+		return nil, err
+	}
+
+	var active, inactive, neverSynced int64
+	_ = r.db.WithContext(ctx).Model(&Device{}).Where("status = ?", "active").Count(&active).Error
+	_ = r.db.WithContext(ctx).Model(&Device{}).Where("status = ?", "inactive").Count(&inactive).Error
+	_ = r.db.WithContext(ctx).Model(&Device{}).Where("status = ?", "never_synced").Count(&neverSynced).Error
+
+	var windows, macos, linux int64
+	_ = r.db.WithContext(ctx).Model(&Device{}).Where("platform = ?", "windows").Count(&windows).Error
+	_ = r.db.WithContext(ctx).Model(&Device{}).Where("platform = ?", "macos").Count(&macos).Error
+	_ = r.db.WithContext(ctx).Model(&Device{}).Where("platform = ?", "linux").Count(&linux).Error
+
+	healthPercentage := 0.0
+	if total > 0 {
+		healthPercentage = math.Round((float64(active)/float64(total))*10000.0) / 100.0
+	}
+
+	return &FleetSummaryData{
+		TotalDevices: total,
+		StatusCounts: StatusCounts{
+			Active:      active,
+			Inactive:    inactive,
+			NeverSynced: neverSynced,
+		},
+		PlatformBreakdown: PlatformBreakdown{
+			Windows: windows,
+			MacOS:   macos,
+			Linux:   linux,
+		},
+		HealthPercentage: healthPercentage,
+	}, nil
 }
