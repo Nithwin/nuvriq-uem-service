@@ -38,6 +38,11 @@ type RegisterDeviceRequest struct {
 	OwnerEmail   string `json:"owner_email"`
 }
 
+// SyncDeviceRequest DTO
+type SyncDeviceRequest struct {
+	Timestamp string `json:"timestamp,omitempty"`
+}
+
 // Response Wrapper DTO
 type APIResponse struct {
 	Status  string      `json:"status"`

@@ -104,3 +104,42 @@ func (h *Handler) RegisterDevice(w http.ResponseWriter, r *http.Request) {
 		Data:   dev,
 	})
 }
+
+func (h *Handler) SyncDevice(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	deviceID := strings.TrimSpace(r.PathValue("id"))
+	if deviceID == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(APIResponse{
+			Status: "error",
+			Error:  "device ID is required in URL path",
+		})
+		return
+	}
+
+	updatedDev, err := h.repo.UpdateDeviceSync(r.Context(), deviceID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(APIResponse{
+				Status: "error",
+				Error:  fmt.Sprintf("device with ID '%s' not found", deviceID),
+			})
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(APIResponse{
+			Status: "error",
+			Error:  "failed to update device sync: " + err.Error(),
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(APIResponse{
+		Status:  "success",
+		Message: "Device synchronized successfully",
+		Data:    updatedDev,
+	})
+}
